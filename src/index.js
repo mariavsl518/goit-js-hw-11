@@ -56,17 +56,23 @@ function handleSubmit(evt) {
 }
 
 function handleClick() { 
+    load.hidden = true;
     getNewImages(params)
-        .then(resp => gallery.insertAdjacentHTML('beforeend', createMarkup(resp)))
+        .then(resp => {
+            load.hidden = false
+            return gallery.insertAdjacentHTML('beforeend', createMarkup(resp));
+        })
         .catch(new Error("Sorry, there are no images matching your search query. Please try again."));
     galleryBox.refresh();
 }
+
+// function 
 
 function createMarkup(obj) {
 
      return obj.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
         `
-        <div class="photo-card">
+        <div class="photo-card" style="margin:30px">
         <a href="${largeImageURL}">
         <img src="${webformatURL}" alt="${tags}" loading="lazy" width="500px"/>
         </a>
