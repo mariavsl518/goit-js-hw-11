@@ -20,9 +20,9 @@ const params = new URLSearchParams({
     per_page: 40,
 })
 
-let page = 1;
+let page = 0;
 load.hidden = true;
-const galleryBox = new SimpleLightbox('.gallery .photo-card a');
+const galleryBox = new SimpleLightbox('.gallery a');
 
 async function getImages(params) {
     if (!form.elements.searchQuery.value) {
@@ -30,18 +30,13 @@ async function getImages(params) {
         throw Notify.failure('Sorry, there are no images matching your search query. Please try again.')
     }
     else {
+        page += 1;
         return await axios.get(`${baseURL}?${params}&page=${page}`)
             .then((resp) => {
                 load.hidden = false;
                 return resp.data.hits;
             })
     }
-}
-
-async function getNewImages(params) {
-    page +=1;
-    return await axios.get(`${baseURL}?${params}&page=${page}`)
-        .then((resp) => { return resp.data.hits });
 }
 
 function handleSubmit(evt) {
@@ -59,8 +54,8 @@ function handleSubmit(evt) {
 
 function handleClick() { 
     load.hidden = true;
-    
-    getNewImages(params)
+
+    getImages(params)
         .then(resp => {
             load.hidden = false
             return gallery.insertAdjacentHTML('beforeend', createMarkup(resp));
