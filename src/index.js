@@ -32,11 +32,12 @@ async function getImages(params) {
 
 
 async function handleSubmit(evt) {
-    evt.preventDefault();
 
+    evt.preventDefault();
     page = 1;
     const request = form.elements.searchQuery.value.trim();
     params.set('q', request);
+
     const resp = await getImages(params);
 
     if (!request || resp.totalHits === 0)
@@ -55,16 +56,22 @@ async function handleSubmit(evt) {
     form.reset();
 }
 
-async function handleClick() { 
-    load.hidden = true;
+async function handleClick(){
+
     page += 1;
+    load.hidden = true;
+
     const resp = await getImages(params);
     gallery.insertAdjacentHTML('beforeend', createMarkup(resp.hits));
         
-    if (gallery.children.length !== resp.totalHits) {
-            load.hidden = false;
-        }
+    if (gallery.children.length === resp.totalHits) {
+        load.hidden = true;
+        return Notify.info("We're sorry, but you've reached the end of search results.")
+    }
+    load.hidden = false;
 }
+    
+
 
 
 function createMarkup(obj) {
