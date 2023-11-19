@@ -3,6 +3,7 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 
+
 const form = document.querySelector('.search-form');
 const gallery = document.querySelector('.gallery');
 const load = document.querySelector('.load-more');
@@ -20,59 +21,61 @@ const params = new URLSearchParams({
     per_page: 40,
 })
 
-let page = 0;
+let page;
 load.hidden = true;
-const galleryBox = new SimpleLightbox('.gallery a');
 
 async function getImages(params) {
-    
-        page +=1;
-        return await axios.get(`${baseURL}?${params}&page=${page}`)
-            .then((resp) => {
-                load.hidden = false;
-                return resp.data.hits;
-            })
-    }
+
+    const resp = await axios.get(`${baseURL}?${params}&page=${page}`);
+    return resp.data
+}
 
 
-function handleSubmit(evt) {
+async function handleSubmit(evt) {
     evt.preventDefault();
+    page = 1;
+    const request = form.elements.searchQuery.value.trim();
 
-    const request = form.elements.searchQuery.value;
     params.set('q', request);
-    
+
     if (!request) {
-        Notify.failure('Sorry, there are no images matching your search query. Please try again.')
+       return Notify.failure('Sorry, there are no images matching your search query. Please try again.')
     }
-    else {
-        getImages(params)
-            .then(resp => gallery.innerHTML = createMarkup(resp))
-    }
+
+    getImages(params)
+            .then(resp => {
+                gallery.innerHTML = createMarkup(resp.hits);
+                Notify.success(`${resp.totalHits} images found`);
+                if (resp.hits.length < params.get('per_page')) {
+                    load.hidden = true
+                }
+                else { load.hidden = false }
+            })
     
     form.reset();
 }
 
 function handleClick() { 
     load.hidden = true;
-
+    page += 1;
     getImages(params)
         .then(resp => {
-            load.hidden = false
-            return gallery.insertAdjacentHTML('beforeend', createMarkup(resp));
+            gallery.insertAdjacentHTML('beforeend', createMarkup(resp.hits));
+                if (resp.hits.length === params.get('per_page')) {
+                    load.hidden = true
+                }
+                else { load.hidden = false }
         })
-        // .catch(new Error("Sorry, there are no images matching your search query. Please try again."));
-    
-    galleryBox.refresh();
+        .catch(Notify.info("We're sorry, but you've reached the end of search results."))
 }
 
 function createMarkup(obj) {
 
      return obj.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
         `
-        <a href="${largeImageURL}">
+
         <div class="photo-card" style="margin:30px">
         <img src="${webformatURL}" alt="${tags}" loading="lazy" width="500px"/>
-        </a>
         <div class="info">
             <p class="info-item">
             <b>Likes:${likes}</b>
