@@ -33,47 +33,39 @@ async function getImages(params) {
 
 async function handleSubmit(evt) {
     evt.preventDefault();
+
     page = 1;
     const request = form.elements.searchQuery.value.trim();
-
     params.set('q', request);
+    const resp = await getImages(params);
 
-    if (!request) {
-       return Notify.failure('Sorry, there are no images matching your search query. Please try again.')
+    if (!request || resp.totalHits === 0) {
+        return Notify.failure('Sorry, there are no images matching your search query. Please try again.')
     }
-
-    getImages(params)
-            .then(resp => {
-                gallery.innerHTML = createMarkup(resp.hits);
-                Notify.success(`${resp.totalHits} images found`);
-                if (resp.hits.length < params.get('per_page')) {
-                    load.hidden = true
-                }
-                else { load.hidden = false }
-            })
-    
+    else {
+        gallery.innerHTML = createMarkup(resp.hits);
+        load.hidden = false
+        Notify.success(`Hooray! We found ${resp.totalHits} images`);
+    }
     form.reset();
 }
 
-function handleClick() { 
+async function handleClick() { 
     load.hidden = true;
     page += 1;
-    getImages(params)
-        .then(resp => {
-            gallery.insertAdjacentHTML('beforeend', createMarkup(resp.hits));
-                if (resp.hits.length === params.get('per_page')) {
-                    load.hidden = true
-                }
-                else { load.hidden = false }
-        })
-        .catch(Notify.info("We're sorry, but you've reached the end of search results."))
+    const resp = await getImages(params);
+    gallery.insertAdjacentHTML('beforeend', createMarkup(resp.hits));
+        
+    if (gallery.children.length !== resp.totalHits) {
+            load.hidden = false;
+        }
 }
+
 
 function createMarkup(obj) {
 
      return obj.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
         `
-
         <div class="photo-card" style="margin:30px">
         <img src="${webformatURL}" alt="${tags}" loading="lazy" width="500px"/>
         <div class="info">
