@@ -39,13 +39,18 @@ async function handleSubmit(evt) {
     params.set('q', request);
     const resp = await getImages(params);
 
-    if (!request || resp.totalHits === 0) {
+    if (!request || resp.totalHits === 0)
+        {
         return Notify.failure('Sorry, there are no images matching your search query. Please try again.')
     }
-    else {
+    else
+        {
         gallery.innerHTML = createMarkup(resp.hits);
-        load.hidden = false
         Notify.success(`Hooray! We found ${resp.totalHits} images`);
+
+        if (resp.totalHits > resp.hits.length) { 
+            load.hidden = false
+        }
     }
     form.reset();
 }
