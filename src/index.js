@@ -25,34 +25,29 @@ load.hidden = true;
 const galleryBox = new SimpleLightbox('.gallery a');
 
 async function getImages(params) {
-    if (!form.elements.searchQuery.value) {
-        gallery.innerHTML = '';
-        throw Notify.failure('Sorry, there are no images matching your search query. Please try again.')
-    }
-    else {
+    
+        page +=1;
         return await axios.get(`${baseURL}?${params}&page=${page}`)
             .then((resp) => {
                 load.hidden = false;
                 return resp.data.hits;
             })
     }
-}
 
-async function getNewImages(params) {
-    page +=1;
-    return await axios.get(`${baseURL}?${params}&page=${page}`)
-        .then((resp) => { return resp.data.hits });
-}
 
 function handleSubmit(evt) {
     evt.preventDefault();
-    page = 1;
 
     const request = form.elements.searchQuery.value;
     params.set('q', request);
-    getImages(params)
-        .then(resp => gallery.innerHTML = createMarkup(resp))
-        .catch(new Error("Sorry, there are no images matching your search query. Please try again."));
+    
+    if (!request) {
+        Notify.failure('Sorry, there are no images matching your search query. Please try again.')
+    }
+    else {
+        getImages(params)
+            .then(resp => gallery.innerHTML = createMarkup(resp))
+    }
     
     form.reset();
 }
@@ -60,12 +55,12 @@ function handleSubmit(evt) {
 function handleClick() { 
     load.hidden = true;
 
-    getNewImages(params)
+    getImages(params)
         .then(resp => {
             load.hidden = false
             return gallery.insertAdjacentHTML('beforeend', createMarkup(resp));
         })
-        .catch(new Error("Sorry, there are no images matching your search query. Please try again."));
+        // .catch(new Error("Sorry, there are no images matching your search query. Please try again."));
     
     galleryBox.refresh();
 }
@@ -74,8 +69,8 @@ function createMarkup(obj) {
 
      return obj.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
         `
-        <div class="photo-card" style="margin:30px">
         <a href="${largeImageURL}">
+        <div class="photo-card" style="margin:30px">
         <img src="${webformatURL}" alt="${tags}" loading="lazy" width="500px"/>
         </a>
         <div class="info">
